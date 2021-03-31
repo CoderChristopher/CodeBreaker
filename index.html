@@ -1,0 +1,134 @@
+<!DOCYTPE html>
+<html>
+	<head>
+		<title> Code Breaker </title>
+		<script src='https://unpkg.com/vue@next'></script>
+	</head>
+	<body>
+		<style>
+			.box{
+				border: 1px solid black;
+				border-radius: 4px;
+				display: inline;
+				padding: 4px;
+			}
+		</style>
+		<div id='app' style='border: 2px dashed black;'>
+			<span v-html='message'></span>
+			<div class='box'>
+			{{ codeclues[0] }}
+			<code-wheel code=0></code-wheel>
+			</div>
+			<div class='box'>
+			{{ codeclues[1] }}
+			<code-wheel code=1></code-wheel>
+			</div>
+			<div class='box'>
+			{{ codeclues[2] }}
+			<code-wheel code=2></code-wheel>
+			</div>
+			<div class='box'>
+			{{ codeclues[3] }}
+			<code-wheel code=3></code-wheel>
+			</div>
+			<span :style='stysum'>{{correct}}</span><br>
+			<span v-html='response' style='margin-top:1em;'></span>
+		</div>
+		<script>
+			function gencode(){
+				return Math.round(Math.random()*9);
+			}
+			function primecode(check){
+				if(check==1||check==2||check==3||check==5||check==7)
+					return true;
+				return false;
+			}
+			var RootInstance={
+				data(){
+					return {
+					message: 'Can you crack my code?<br>',
+					response: '',
+					codes: [gencode(),gencode(),gencode(),gencode()],
+					wheels:[0,0,0,0],
+					codeclues:['','','',''],
+					stysum: {
+						color: 'black'
+					},
+					correct: 0,
+					}
+				},
+				methods:{
+					sumwheels: function(){
+						return 	this.wheels[0]+this.wheels[1]+this.wheels[2]+this.wheels[3];
+					},
+					sumcodes: function(){
+						return 	this.codes[0]+this.codes[1]+this.codes[2]+this.codes[3];
+					},
+					gencodeclues: function(){
+						for(var i=0;i<4;i++){
+							this.codeclues[i]='';
+							if(this.codes[i]%2==0&&this.codes[i]!=0)
+								this.codeclues[i]+='-';
+							if(primecode(this.codes[i]))
+								this.codeclues[i]+='p';
+
+						}
+					},
+					check: function(code){
+						if(this.sumwheels()==this.sumcodes())
+							this.stysum.color='green';
+						else
+							this.stysum.color='red';
+						this.validate();
+					},
+					validate: function(){
+						this.correct=0;
+						for(var i=0;i<4;i++){
+							for(var j=0;j<4;j++)
+								if(this.wheels[j]==this.codes[i]){
+									this.correct++;
+									break;
+								}
+						}
+									
+						for(var i=0;i<4;i++){
+							if(this.wheels[i]!=this.codes[i]){
+								this.response='STILL WRONG <BR>'
+								return;
+							}
+						}
+						this.response='DRATS! You have broken my perfect code! <BR>'
+						return;
+
+					},
+					subtract: function(code){
+						
+						if(this.wheels[code]!=0)
+							this.wheels[code]--;
+						return this.wheels[code];
+					},
+					add: function(code){
+						if(this.wheels[code]!=9)
+							this.wheels[code]++;
+						return this.wheels[code];
+					}
+				},
+				created(){
+					this.gencodeclues();
+				}
+			}
+			var vme = Vue.createApp(RootInstance);
+
+			vme.component('code-wheel',{
+				data() {
+					return{
+					value: 0
+					};
+				},
+				props: ['code'],
+				template: `<button @click.left="value=this.$parent.add(code), this.$parent.check(code)" @click.prevent.right="value=this.$parent.subtract(code), this.$parent.check(code)">{{value}}</button>`
+			});
+			var mnt = vme.mount('#app');
+		</script>
+	</body>
+</html>
